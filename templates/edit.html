@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Study Task</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f5fb;
+            padding: 30px 15px;
+        }
+        .card {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 14px;
+        }
+        input, select, button, a {
+            box-sizing: border-box;
+            width: 100%;
+            display: block;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 7px;
+            font: inherit;
+        }
+        input, select { border: 1px solid #ddd; }
+        button, a {
+            background: #5146b9;
+            color: white;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        a { box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Edit Study Task</h2>
+
+        <form method="POST">
+            <label>Task Name</label>
+            <input name="title" maxlength="150"
+                   value="{{ task.title }}" required>
+
+            <label>Subject</label>
+            <input name="subject" maxlength="100"
+                   value="{{ task.subject }}" required>
+
+            <label>Deadline</label>
+            <input type="date" name="due_date"
+                   value="{{ task.due_date }}" required>
+
+            <label>Priority</label>
+            <select name="priority">
+                {% for p in ['High', 'Medium', 'Low'] %}
+                    <option value="{{ p }}"
+                        {% if task.priority == p %}selected{% endif %}>
+                        {{ p }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Save Changes</button>
+        </form>
+
+        <a href="{{ url_for('home') }}">Back to Dashboard</a>
+    </div>
+</body>
+</html>

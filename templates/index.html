@@ -1,0 +1,868 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Study Planner</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f6fc;
+            color: #252746;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #5146b9, #796de0);
+            color: white;
+            padding: 35px 7%;
+        }
+
+        header h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 15px;
+        }
+
+        .welcome-text {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Dashboard Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .card,
+        .panel {
+            background: white;
+            padding: 23px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(37, 39, 70, 0.06);
+            min-width: 0;
+        }
+
+        .card {
+            border-top: 4px solid #5146b9;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 7px 20px rgba(37, 39, 70, 0.10);
+        }
+
+        .card-label {
+            color: #77798d;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .stats h2 {
+            margin: 12px 0 0;
+            color: #5146b9;
+            font-size: 32px;
+        }
+
+        .total-card {
+            border-top-color: #5146b9;
+        }
+
+        .pending-card {
+            border-top-color: #e6a23c;
+        }
+
+        .completed-card {
+            border-top-color: #269b70;
+        }
+
+        .panel {
+            margin-top: 25px;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 21px;
+        }
+
+        /* Forms */
+        .task-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        input,
+        select,
+        button,
+        .clear-button {
+            font: inherit;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        input,
+        select {
+            border: 1px solid #d9dbea;
+            width: 100%;
+            background: white;
+            color: #252746;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #5146b9;
+            box-shadow: 0 0 0 3px rgba(81, 70, 185, 0.10);
+        }
+
+        button,
+        .clear-button {
+            border: none;
+            cursor: pointer;
+            background: #5146b9;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: #40369c;
+        }
+
+        .add-button {
+            grid-column: 1 / -1;
+            padding: 14px;
+            font-weight: bold;
+        }
+
+        /* Task List */
+        .task {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 18px 0;
+            border-bottom: 1px solid #eeeef5;
+        }
+
+        .task:last-child {
+            border-bottom: none;
+        }
+
+        .task h3 {
+            margin: 0 0 8px;
+            overflow-wrap: anywhere;
+            font-size: 17px;
+        }
+
+        .task p {
+            margin: 6px 0;
+            color: #686b80;
+            font-size: 14px;
+        }
+
+        .done {
+            text-decoration: line-through;
+            opacity: 0.55;
+        }
+
+        /* Priority Badges */
+        .priority {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        .High {
+            color: #c92f49 !important;
+            background: #fde9ed;
+        }
+
+        .Medium {
+            color: #a56b0c !important;
+            background: #fff3d9;
+        }
+
+        .Low {
+            color: #23845b !important;
+            background: #e5f6ed;
+        }
+
+        /* Task Action Buttons */
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .actions form {
+            margin: 0;
+        }
+
+        .actions button {
+            padding: 9px 13px;
+            font-size: 13px;
+        }
+
+        .delete {
+            background: #d9364f;
+        }
+
+        .delete:hover {
+            background: #b52239;
+        }
+
+        .empty {
+            color: #777;
+            text-align: center;
+            padding: 25px;
+        }
+
+        /* Filters */
+        .filter-form {
+            display: grid;
+            grid-template-columns: 2fr 1.3fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .filter-actions button,
+        .clear-button {
+            padding: 11px 18px;
+        }
+
+        .clear-button {
+            background: #e8e7f7;
+            color: #5146b9;
+        }
+
+        .clear-button:hover {
+            background: #d9d6f2;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .task-count {
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* Progress */
+        .progress-track {
+            background: #e8e7f7;
+            height: 11px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #5146b9, #9288ed);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .overdue-number {
+            color: #d9364f !important;
+        }
+
+        .chart-container {
+            max-width: 430px;
+            margin: 20px auto 0;
+        }
+
+        /* Study Productivity */
+        .productivity-panel {
+            background: linear-gradient(135deg, #ffffff, #f0efff);
+            border-left: 5px solid #5146b9;
+        }
+
+        .productivity-message {
+            color: #5146b9;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .productivity-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .productivity-item {
+            background: white;
+            padding: 17px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .productivity-item h3 {
+            color: #5146b9;
+            font-size: 25px;
+            margin: 5px 0;
+        }
+
+        .productivity-item p {
+            color: #77798d;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* Footer */
+        .site-footer {
+            background: #252746;
+            color: white;
+            text-align: center;
+            padding: 30px 15px;
+            margin-top: 45px;
+        }
+
+        .site-footer h3 {
+            margin: 0 0 10px;
+        }
+
+        .site-footer p {
+            margin: 7px 0;
+            color: #d8d8e8;
+            font-size: 14px;
+        }
+
+        .site-footer .footer-copy {
+            font-size: 12px;
+            margin-top: 18px;
+            opacity: 0.8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 700px) {
+            header {
+                padding: 25px 20px;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .task-form,
+            .filter-form,
+            .productivity-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .add-button {
+                grid-column: auto;
+            }
+
+            .task {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .actions {
+                width: 100%;
+            }
+
+            .card,
+            .panel {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>My Study Planner 📚</h1>
+    <p>Plan your studies. Track your deadlines. Achieve your goals.</p>
+
+    <div class="welcome-text">
+        Stay organized, manage your time and make every study session count!
+    </div>
+</header>
+
+<main>
+
+    <!-- Dashboard Statistics -->
+    <section class="stats">
+
+        <div class="card total-card">
+            <div class="card-label">📋 Total Tasks</div>
+            <h2>{{ total }}</h2>
+        </div>
+
+        <div class="card pending-card">
+            <div class="card-label">⏳ Pending Tasks</div>
+            <h2>{{ pending }}</h2>
+        </div>
+
+        <div class="card completed-card">
+            <div class="card-label">✅ Completed Tasks</div>
+            <h2>{{ completed }}</h2>
+        </div>
+
+    </section>
+
+    <!-- Add Study Task -->
+    <section class="panel">
+
+        <h2>+ Add a Study Task</h2>
+
+        <form class="task-form"
+              action="{{ url_for('add_task') }}"
+              method="POST">
+
+            <input name="title"
+                   placeholder="Task or assignment name"
+                   maxlength="150"
+                   required>
+
+            <input name="subject"
+                   placeholder="Subject name"
+                   maxlength="100"
+                   required>
+
+            <input type="date"
+                   name="due_date"
+                   min="{{ today }}"
+                   required>
+
+            <select name="priority" required>
+                <option value="High">High Priority</option>
+                <option value="Medium" selected>Medium Priority</option>
+                <option value="Low">Low Priority</option>
+            </select>
+
+            <button class="add-button" type="submit">
+                + Add Task
+            </button>
+
+        </form>
+
+    </section>
+
+    <!-- Search and Filter Tasks -->
+    <section class="panel">
+
+        <div class="section-heading">
+            <h2>My Study Tasks</h2>
+
+            <span class="task-count">
+                {{ tasks|length }} task(s) shown
+            </span>
+        </div>
+
+        <form method="GET" action="{{ url_for('home') }}">
+
+            <div class="filter-form">
+
+                <input type="search"
+                       name="search"
+                       placeholder="Search task name..."
+                       value="{{ search }}">
+
+                <select name="subject">
+                    <option value="">All Subjects</option>
+
+                    {% for s in subjects %}
+                    <option value="{{ s['subject'] }}"
+                        {% if selected_subject == s['subject'] %}selected{% endif %}>
+                        {{ s['subject'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <select name="priority">
+                    <option value="">All Priorities</option>
+
+                    {% for p in ['High', 'Medium', 'Low'] %}
+                    <option value="{{ p }}"
+                        {% if selected_priority == p %}selected{% endif %}>
+                        {{ p }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <select name="status">
+                    <option value="all"
+                        {% if selected_status == 'all' %}selected{% endif %}>
+                        All Statuses
+                    </option>
+
+                    <option value="pending"
+                        {% if selected_status == 'pending' %}selected{% endif %}>
+                        Pending
+                    </option>
+
+                    <option value="completed"
+                        {% if selected_status == 'completed' %}selected{% endif %}>
+                        Completed
+                    </option>
+                </select>
+
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit">Apply Filters</button>
+
+                <a class="clear-button" href="{{ url_for('home') }}">
+                    Clear Filters
+                </a>
+            </div>
+
+        </form>
+
+        <!-- Task List -->
+        {% if tasks %}
+
+            {% for task in tasks %}
+
+            <div class="task">
+
+                <div>
+                    <h3 class="{{ 'done' if task.completed else '' }}">
+                        {{ task.title }}
+                    </h3>
+
+                    <p>Subject: {{ task.subject }}</p>
+                    <p>Deadline: {{ task.due_date }}</p>
+
+                    <p class="priority {{ task.priority }}">
+                        {{ task.priority }} Priority
+                    </p>
+
+                    {% if not task.completed and task.due_date < today %}
+                    <p style="color:#d9364f; font-weight:bold;">
+                        ⚠ Overdue
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="actions">
+
+                    <form action="{{ url_for('complete_task', task_id=task.id) }}"
+                          method="POST">
+                        <button type="submit">
+                            {{ 'Undo' if task.completed else 'Complete' }}
+                        </button>
+                    </form>
+
+                    <form action="{{ url_for('edit_task', task_id=task.id) }}"
+                          method="GET">
+                        <button type="submit">Edit</button>
+                    </form>
+
+                    <form action="{{ url_for('delete_task', task_id=task.id) }}"
+                          method="POST"
+                          onsubmit="return confirm('Delete this task?');">
+                        <button class="delete" type="submit">Delete</button>
+                    </form>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <p class="empty">
+                No matching tasks found. Try changing your filters
+                or add a new study task.
+            </p>
+
+        {% endif %}
+
+    </section>
+
+    <!-- Study Progress Summary -->
+    <section class="stats" style="margin-top: 25px;">
+
+        <div class="card">
+            <div class="card-label">📈 Overall Progress</div>
+            <h2>{{ progress }}%</h2>
+
+            <div class="progress-track">
+                <div class="progress-fill"
+                     data-progress="{{ progress|int }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">⚠ Overdue Tasks</div>
+            <h2 class="overdue-number">{{ overdue_count }}</h2>
+            <p>Pending tasks past their deadline</p>
+        </div>
+
+        <div class="card">
+            <div class="card-label">📅 Upcoming Deadlines</div>
+            <h2>{{ upcoming_tasks|length }}</h2>
+            <p>Due within the next 7 days</p>
+        </div>
+
+    </section>
+
+    <!-- Study Productivity -->
+    <section class="panel productivity-panel">
+
+        <h2>🎯 My Study Productivity</h2>
+
+        {% if total == 0 %}
+
+            <p class="productivity-message">
+                Start adding study tasks to track your productivity!
+            </p>
+
+        {% elif progress >= 80 %}
+
+            <p class="productivity-message">
+                🌟 Excellent work! You're doing amazing. Keep it up!
+            </p>
+
+        {% elif progress >= 50 %}
+
+            <p class="productivity-message">
+                👏 Great progress! You're halfway to your goals.
+            </p>
+
+        {% elif progress > 0 %}
+
+            <p class="productivity-message">
+                💪 Good start! Stay consistent and complete more tasks.
+            </p>
+
+        {% else %}
+
+            <p class="productivity-message">
+                🚀 Your study journey starts now. Let's get productive!
+            </p>
+
+        {% endif %}
+
+        <div class="productivity-grid">
+
+            <div class="productivity-item">
+                <h3>{{ total }}</h3>
+                <p>Total Study Tasks</p>
+            </div>
+
+            <div class="productivity-item">
+                <h3>{{ completed }}</h3>
+                <p>Tasks Completed</p>
+            </div>
+
+            <div class="productivity-item">
+                <h3>{{ progress }}%</h3>
+                <p>Completion Rate</p>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Study Progress Chart -->
+    <section class="panel">
+
+        <h2>Study Progress Analysis</h2>
+        <p>Compare your completed tasks with pending tasks.</p>
+
+        <div class="chart-container">
+            <canvas id="progressChart"></canvas>
+
+            <p id="chartFallback" class="empty" hidden>
+                The chart could not load. Your task statistics are shown above.
+            </p>
+        </div>
+
+    </section>
+
+    <!-- Upcoming Deadlines -->
+    <section class="panel">
+
+        <h2>Upcoming Deadlines</h2>
+
+        {% if upcoming_tasks %}
+
+            {% for task in upcoming_tasks %}
+
+            <div class="task">
+
+                <div>
+                    <h3>{{ task.title }}</h3>
+                    <p>Subject: {{ task.subject }}</p>
+                    <p>Deadline: {{ task.due_date }}</p>
+
+                    <p class="priority {{ task.priority }}">
+                        {{ task.priority }} Priority
+                    </p>
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <p class="empty">
+                No pending deadlines in the next 7 days.
+            </p>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+
+    <h3>Student Study Planner 📚</h3>
+
+    <p>Plan smarter. Study better. Achieve more.</p>
+
+    <p class="footer-copy">
+        © 2026 Student Study Planner | All Rights Reserved
+    </p>
+
+</footer>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script id="chart-data" type="application/json">
+{
+    "completed": {{ completed|tojson }},
+    "pending": {{ pending|tojson }}
+}
+</script>
+
+<script>
+
+    // Progress Bar
+    document.querySelectorAll(".progress-fill").forEach(function(bar) {
+
+        let progress = Number(bar.dataset.progress);
+
+        progress = Math.max(0, Math.min(100, progress));
+
+        bar.style.width = progress + "%";
+
+    });
+
+
+    // Chart Data
+    const chartData = JSON.parse(
+        document.getElementById("chart-data").textContent
+    );
+
+    const completedTasks = Number(chartData.completed);
+    const pendingTasks = Number(chartData.pending);
+
+    const chartCanvas = document.getElementById("progressChart");
+    const chartFallback = document.getElementById("chartFallback");
+
+
+    // Doughnut Chart
+    if (typeof Chart !== "undefined" && chartCanvas) {
+
+        new Chart(chartCanvas, {
+
+            type: "doughnut",
+
+            data: {
+
+                labels: ["Completed", "Pending"],
+
+                datasets: [{
+
+                    data: [completedTasks, pendingTasks],
+
+                    backgroundColor: [
+                        "#5146b9",
+                        "#e3e1f5"
+                    ],
+
+                    borderWidth: 0
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                plugins: {
+
+                    legend: {
+                        position: "bottom"
+                    }
+
+                }
+
+            }
+
+        });
+
+    } else {
+
+        chartFallback.hidden = false;
+        chartCanvas.hidden = true;
+
+    }
+
+</script>
+
+</body>
+</html>
