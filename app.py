@@ -2,9 +2,12 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import date, timedelta
+import os
 
 app = Flask(__name__)
-DATABASE = "study_planner.db"
+
+# Database configuration
+DATABASE = os.path.join(os.path.dirname(__file__), "study_planner.db")
 
 
 def get_db():
@@ -15,6 +18,7 @@ def get_db():
 
 def init_db():
     conn = get_db()
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,8 +29,13 @@ def init_db():
             completed INTEGER DEFAULT 0
         )
     """)
+
     conn.commit()
     conn.close()
+
+
+# Initialize database when the application starts
+init_db()
 
 
 @app.route("/")
@@ -38,7 +47,7 @@ def home():
 
     conn = get_db()
 
-    # Apply search and filters
+    # Search and filter tasks
     tasks = conn.execute("""
         SELECT * FROM tasks
         WHERE title LIKE ?
@@ -51,18 +60,22 @@ def home():
         )
         ORDER BY completed ASC, due_date ASC
     """, (
-        f"%{search}%", f"%{subject}%",
-        priority, priority,
-        status, status, status
+        f"%{search}%",
+        f"%{subject}%",
+        priority,
+        priority,
+        status,
+        status,
+        status
     )).fetchall()
 
-    # Overall statistics from all tasks
+    # Dashboard statistics
     all_tasks = conn.execute(
         "SELECT * FROM tasks"
     ).fetchall()
 
     total = len(all_tasks)
-    completed = sum(t["completed"] for t in all_tasks)
+    completed = sum(task["completed"] for task in all_tasks)
     pending = total - completed
 
     progress = round((completed / total) * 100) if total else 0
@@ -70,21 +83,22 @@ def home():
     today = date.today()
     next_week = today + timedelta(days=7)
 
-    # Count overdue tasks
+    # Overdue tasks
     overdue_count = sum(
-        1 for t in all_tasks
-        if not t["completed"]
-        and t["due_date"] < today.isoformat()
+        1 for task in all_tasks
+        if not task["completed"]
+        and task["due_date"] < today.isoformat()
     )
 
-    # Upcoming deadlines within the next 7 days
+    # Upcoming deadlines
     upcoming_tasks = [
-        t for t in all_tasks
-        if not t["completed"]
-        and today.isoformat() <= t["due_date"]
+        task for task in all_tasks
+        if not task["completed"]
+        and today.isoformat() <= task["due_date"]
         <= next_week.isoformat()
     ]
 
+    # Available subjects
     subjects = conn.execute("""
         SELECT DISTINCT subject
         FROM tasks
@@ -104,13 +118,14 @@ def home():
         upcoming_tasks=upcoming_tasks,
         today=today.isoformat(),
         search=search,
+        subjects=subjects,
         selected_subject=subject,
         selected_priority=priority,
         selected_status=status
     )
 
 
-
+# Add a task
 @app.route("/add", methods=["POST"])
 def add_task():
     title = request.form.get("title", "").strip()
@@ -118,22 +133,28 @@ def add_task():
     due_date = request.form.get("due_date", "")
     priority = request.form.get("priority", "Medium")
 
-    if (title and subject and due_date
-            and priority in ["Low", "Medium", "High"]):
+    if (
+        title and subject and due_date
+        and priority in ["Low", "Medium", "High"]
+    ):
         conn = get_db()
+
         conn.execute("""
             INSERT INTO tasks (title, subject, due_date, priority)
             VALUES (?, ?, ?, ?)
         """, (title, subject, due_date, priority))
+
         conn.commit()
         conn.close()
 
     return redirect(url_for("home"))
 
 
+# Mark a task complete or pending
 @app.route("/complete/<int:task_id>", methods=["POST"])
 def complete_task(task_id):
     conn = get_db()
+
     conn.execute("""
         UPDATE tasks
         SET completed = CASE
@@ -142,21 +163,30 @@ def complete_task(task_id):
         END
         WHERE id = ?
     """, (task_id,))
+
     conn.commit()
     conn.close()
 
     return redirect(url_for("home"))
 
 
+# Delete a task
 @app.route("/delete/<int:task_id>", methods=["POST"])
 def delete_task(task_id):
     conn = get_db()
-    conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+
+    conn.execute(
+        "DELETE FROM tasks WHERE id = ?",
+        (task_id,)
+    )
+
     conn.commit()
     conn.close()
 
     return redirect(url_for("home"))
 
+
+# Edit a task
 @app.route("/edit/<int:task_id>", methods=["GET", "POST"])
 def edit_task(task_id):
     conn = get_db()
@@ -167,20 +197,32 @@ def edit_task(task_id):
         due_date = request.form.get("due_date", "")
         priority = request.form.get("priority", "Medium")
 
-        if (title and subject and due_date
-                and priority in ["Low", "Medium", "High"]):
+        if (
+            title and subject and due_date
+            and priority in ["Low", "Medium", "High"]
+        ):
             conn.execute("""
                 UPDATE tasks
                 SET title = ?, subject = ?, due_date = ?, priority = ?
                 WHERE id = ?
-            """, (title, subject, due_date, priority, task_id))
+            """, (
+                title,
+                subject,
+                due_date,
+                priority,
+                task_id
+            ))
+
             conn.commit()
             conn.close()
+
             return redirect(url_for("home"))
 
     task = conn.execute(
-        "SELECT * FROM tasks WHERE id = ?", (task_id,)
+        "SELECT * FROM tasks WHERE id = ?",
+        (task_id,)
     ).fetchone()
+
     conn.close()
 
     if task is None:
@@ -188,49 +230,6 @@ def edit_task(task_id):
 
     return render_template("edit.html", task=task)
 
-if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
-
-from flask import Flask, render_template_string
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Student Study Planner</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background: #f3f4f6;
-                text-align: center;
-                padding: 60px 20px;
-            }
-            .card {
-                background: white;
-                max-width: 600px;
-                margin: auto;
-                padding: 35px;
-                border-radius: 16px;
-                box-shadow: 0 4px 15px #0001;
-            }
-            h1 { color: #4f46e5; }
-            p { color: #555; line-height: 1.6; }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h1>Student Study Planner</h1>
-            <p>Plan your studies. Track your deadlines.</p>
-            <p>Your productivity journey starts here!</p>
-        </div>
-    </body>
-    </html>
-    """)
 
 if __name__ == "__main__":
     app.run(debug=True)
